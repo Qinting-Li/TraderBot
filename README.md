@@ -1,143 +1,23 @@
 # TraderBot
 
-TraderBot is a Discord-to-Bitget trading signal bot. It listens to selected Discord
-channels, extracts futures trade signals, applies risk controls, and can submit
-orders to Bitget. The default mode is **dry run**, so it will parse and log trades
-without placing real orders.
+TraderBot is a modular trading automation system that bridges Discord-based trading signals with Bitget futures execution. It is designed to monitor selected Discord channels, transform unstructured natural-language trade messages into structured trading instructions, validate each signal through configurable risk-management rules, and route approved orders to the Bitget API when live execution is explicitly enabled.
 
-> This project is automation software, not financial advice. Use live trading only
-> after auditing the code, testing with small size, and accepting the exchange and
-> market risks.
+The system is built with a safety-first execution model. By default, TraderBot operates in dry-run mode, allowing users to audit signal parsing, inspect execution decisions, validate risk parameters, and review logs without placing real orders. Live trading requires an explicit configuration switch and valid exchange credentials, reducing the risk of accidental execution during development or testing.
 
-## What Changed
+## Project Features
 
-- No hardcoded secrets. Tokens and API keys are read from environment variables.
-- Dry-run is enabled by default. Live trading requires an explicit opt-in.
-- The code is split into focused modules: config, parser, risk, exchange client,
-  executor, Discord gateway, and app entrypoint.
-- Risk controls include per-trade risk, max leverage, max notional, min confidence,
-  and a simple per-symbol cooldown.
-- Signal parsing is covered by unit tests.
-- The README, `.env.example`, `.gitignore`, and dependency files are ready for a
-  public repository.
+* **Discord-Based Signal Ingestion**: Monitors configured Discord channels or threads and processes incoming messages as potential trading signals.
+* **Structured Signal Extraction**: Parses unstructured text into normalized trade objects, including trading symbol, market direction, entry price, stop-loss level, take-profit targets, and parser confidence.
+* **Confidence-Aware Filtering**: Rejects ambiguous or incomplete signals that fall below a configurable confidence threshold.
+* **Risk-Governed Execution Pipeline**: Applies pre-trade validation before execution, including per-trade risk limits, leverage caps, notional exposure limits, and stop-loss-based position sizing.
+* **Dry-Run First Architecture**: Simulates trade execution and records decision logs by default, enabling safer testing, debugging, and strategy validation.
+* **Bitget Futures API Integration**: Supports optional live futures order submission through Bitget REST API credentials when live trading is deliberately enabled.
+* **Per-Symbol Cooldown Control**: Prevents duplicate or excessive execution on the same symbol within a configurable time window.
+* **Environment-Driven Configuration**: Uses environment variables for Discord credentials, exchange API keys, risk parameters, channel selection, logging level, and runtime behavior.
+* **Modular Python Design**: Separates configuration, message parsing, risk calculation, exchange communication, trade execution, Discord connectivity, and application startup into independent components.
+* **Test-Covered Core Logic**: Provides unit tests for key components such as signal parsing and risk calculation to support maintainability and regression checking.
+* **Security-Conscious Repository Structure**: Avoids hardcoded secrets and provides `.env.example`, `.gitignore`, and dependency files suitable for public repository release.
 
-## Project Layout
+## Risk Disclaimer
 
-```text
-src/traderbot/
-  app.py            # Runtime wiring
-  config.py         # Environment based settings
-  discord_client.py # Discord gateway + REST helpers
-  exchange.py       # Bitget REST client and dry-run exchange
-  executor.py       # Trade execution workflow and cooldown checks
-  models.py         # Shared dataclasses
-  parser.py         # Text signal parser
-  risk.py           # Position sizing
-tests/
-  test_parser.py
-  test_risk.py
-```
-
-`Quant BOT.py` remains as a compatibility launcher.
-
-## Setup
-
-1. Create a virtual environment.
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-2. Install dependencies.
-
-```powershell
-pip install -r requirements.txt
-```
-
-3. Copy `.env.example` to `.env` and fill in your settings.
-
-```powershell
-Copy-Item .env.example .env
-```
-
-4. Run in dry-run mode.
-
-```powershell
-$env:PYTHONPATH = "src"
-python -m traderbot
-```
-
-## Configuration
-
-Environment variables:
-
-| Variable | Required | Default | Description |
-| --- | --- | --- | --- |
-| `DISCORD_BOT_TOKEN` | yes | | Discord bot token. |
-| `DISCORD_CHANNEL_IDS` | yes | | Comma-separated channel or thread IDs. |
-| `BITGET_API_KEY` | live only | | Bitget API key. |
-| `BITGET_SECRET_KEY` | live only | | Bitget secret key. |
-| `BITGET_PASSPHRASE` | live only | | Bitget passphrase. |
-| `TRADERBOT_LIVE_TRADING` | no | `false` | Must be `true` to place real orders. |
-| `RISK_PER_TRADE_PERCENT` | no | `0.01` | Equity fraction risked per trade. |
-| `MAX_LEVERAGE` | no | `5` | Max futures leverage. |
-| `MAX_POSITION_NOTIONAL_USDT` | no | `500` | Notional cap per signal. |
-| `MIN_SIGNAL_CONFIDENCE` | no | `0.65` | Parser confidence threshold. |
-| `SYMBOL_COOLDOWN_SECONDS` | no | `300` | Cooldown per symbol after execution. |
-| `LOG_LEVEL` | no | `INFO` | Python logging level. |
-
-Optional channel market overrides:
-
-```powershell
-$env:CHANNEL_MARKET_OVERRIDES = '{"123456789":"futures","987654321":"spot"}'
-```
-
-Spot signals are parsed and logged, but skipped by the futures executor.
-
-## Signal Examples
-
-```text
-BTCUSDT LONG
-Entry: 65000
-SL: 64000
-TP1: 66000
-TP2: 67500
-```
-
-```text
-ETH short entry 3500 stop 3560 take profit 3400 3300
-```
-
-The parser looks for a symbol, direction, entry, stop loss, and one or more take
-profit targets. Signals with low confidence are ignored.
-
-## Live Trading
-
-Live trading is intentionally gated:
-
-```powershell
-$env:TRADERBOT_LIVE_TRADING = "true"
-$env:PYTHONPATH = "src"
-python -m traderbot
-```
-
-Before enabling live mode:
-
-- Use a restricted Bitget API key.
-- Disable withdrawal permission.
-- Start with small account equity and conservative caps.
-- Monitor logs and exchange order history.
-
-## Tests
-
-```powershell
-pytest
-```
-
-## Security Notes
-
-- Never commit `.env`, API keys, Discord tokens, or log files containing private
-  messages.
-- The default `.gitignore` excludes runtime logs and local environment files.
-- Treat Discord signal sources as untrusted input.
+TraderBot is automation software for technical experimentation and workflow automation. It does not provide financial advice, investment recommendations, or guaranteed trading performance. Live trading should only be enabled after independent code review, controlled testing, restricted API-key configuration, and acceptance of all exchange, liquidity, and market risks.
